@@ -65,13 +65,19 @@ async function startServer() {
     }
 
     try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 15000);
+      
       const response = await fetch(url, {
         method: 'POST',
         headers: {
           'Content-Type': 'text/plain;charset=utf-8',
         },
-        body: JSON.stringify(body)
+        body: JSON.stringify(body),
+        signal: controller.signal
       });
+      
+      clearTimeout(timeoutId);
       
       const text = await response.text();
       try {
@@ -445,7 +451,7 @@ async function startServer() {
     app.use(express.static(distPath));
     
     // SPA fallback
-    app.get('(.*)', (req, res) => {
+    app.get('*splat', (req, res) => {
       res.sendFile(path.join(distPath, 'index.html'));
     });
   }
