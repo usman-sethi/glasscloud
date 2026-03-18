@@ -68,7 +68,7 @@ import { AiSidebar } from './components/AiSidebar';
 import { AiFileChatModal } from './components/AiFileChatModal';
 import { AIRouter } from './services/ai/router';
 
-const DEFAULT_API_URL = import.meta.env.VITE_GOOGLE_APPS_SCRIPT_URL || 'https://script.google.com/macros/s/AKfycbxzJ-doO7L4YAio0sx3l99vEALEz-omzPnhNBpYKipyc7pJGmWv9kwN8d5XvKvPuC0jIg/exec';
+const DEFAULT_API_URL = import.meta.env.VITE_GOOGLE_APPS_SCRIPT_URL || 'https://script.google.com/macros/s/AKfycbyUbWc723R4zFtQ0t_w6H-fVsFAG89rhm_84i08ll1I3V-h5tT3P4QUFHrBBi9gAUtpSw/exec';
 
 // Types
 import { FileItem } from './types';
@@ -632,9 +632,9 @@ export default function App() {
             }
           }, 1000);
 
-        } catch (apiError) {
+        } catch (apiError: any) {
           console.error("Failed to save to Google Sheet:", apiError);
-          toast.error("File uploaded to Cloudinary but failed to save to database");
+          toast.error(`Database error: ${apiError instanceof Error ? apiError.message : String(apiError)}`);
         }
       } catch (error: any) {
         console.error("Upload error:", error);
@@ -642,27 +642,27 @@ export default function App() {
         
         if (error.message && error.message.includes('Invalid response from Google Apps Script')) {
           toast.error(<AppsScriptErrorToast />, { duration: 15000 });
-        } else {
-          // Fallback for prototype: Add it locally if server fails
-          toast.error(`Upload failed: ${error instanceof Error ? error.message : 'Unknown error'}. Added locally.`);
-          setFiles((prev) => [{
-            id: newUploadId,
-            name: file.name,
-            type: getFileType(file.type, file.name),
-            size: formattedSize,
-            date: new Date(),
-            url: URL.createObjectURL(file), // Local preview URL
-            parentId: currentFolderId || 'root',
-            isFavorite: false,
-            isTrashed: false,
-            metadata: {
-              name: file.name,
-              size: file.size,
-              type: file.type,
-              lastModified: new Date().toISOString()
-            }
-          }, ...prev]);
         }
+        
+        // Fallback for prototype: Add it locally if server fails
+        toast.error(`Upload failed: ${error instanceof Error ? error.message : 'Unknown error'}. Added locally.`);
+        setFiles((prev) => [{
+          id: newUploadId,
+          name: file.name,
+          type: getFileType(file.type, file.name),
+          size: formattedSize,
+          date: new Date(),
+          url: URL.createObjectURL(file), // Local preview URL
+          parentId: currentFolderId || 'root',
+          isFavorite: false,
+          isTrashed: false,
+          metadata: {
+            name: file.name,
+            size: file.size,
+            type: file.type,
+            lastModified: new Date().toISOString()
+          }
+        }, ...prev]);
       }
     });
   }, [currentFolderId, userId, files]);
@@ -1477,9 +1477,9 @@ export default function App() {
           }
         }, 1000);
 
-      } catch (apiError) {
+      } catch (apiError: any) {
         console.error("Failed to save to Google Sheet:", apiError);
-        toast.error("File uploaded to Cloudinary but failed to save to database");
+        toast.error(`Database error: ${apiError instanceof Error ? apiError.message : String(apiError)}`);
       }
     } catch (error: any) {
       console.error("Upload error:", error);
@@ -3017,10 +3017,10 @@ function AuthScreen({ onLogin, apiUrl, setApiUrl, callApi }: { onLogin: (userId:
       } catch (fetchError: any) {
         console.error("Standard fetch failed, trying fallback:", fetchError);
         
-        // If it's our specific HTML error, show it to the user and don't fallback
+        // If it's our specific HTML error, show it to the user but still fallback to simulated login
         if (fetchError.message && fetchError.message.includes('Invalid response from Google Apps Script')) {
           toast.error(<AppsScriptErrorToast />, { duration: 15000 });
-          return;
+          // We removed the 'return;' here so it continues to the fallback
         }
         
         // Fallback: If standard POST fails (often due to CORS with Apps Script),
@@ -4737,9 +4737,9 @@ function SharedFileView({ token, callApi, setInputDialog }: { token: string, cal
             }
           }, 1000);
 
-        } catch (apiError) {
+        } catch (apiError: any) {
           console.error("Failed to save to Google Sheet:", apiError);
-          toast.error("File uploaded to Cloudinary but failed to save to database");
+          toast.error(`Database error: ${apiError instanceof Error ? apiError.message : String(apiError)}`);
         }
       } catch (error: any) {
         console.error("Upload error:", error);
