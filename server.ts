@@ -1,5 +1,4 @@
 import express from "express";
-import { createServer as createViteServer } from "vite";
 import crypto from "crypto";
 import multer from "multer";
 import fs from "fs";
@@ -431,7 +430,10 @@ async function startServer() {
   });
 
   // Vite middleware for development
-  if (process.env.NODE_ENV !== "production") {
+  if (process.env.NODE_ENV !== "production" && !process.env.VERCEL) {
+    // Use dynamic import with a variable to prevent Vercel from bundling Vite in production
+    const viteModule = "vite";
+    const { createServer: createViteServer } = await import(viteModule);
     const vite = await createViteServer({
       server: { middlewareMode: true },
       appType: "spa",
@@ -443,7 +445,7 @@ async function startServer() {
     app.use(express.static(distPath));
     
     // SPA fallback
-    app.get('*all', (req, res) => {
+    app.get('(.*)', (req, res) => {
       res.sendFile(path.join(distPath, 'index.html'));
     });
   }
