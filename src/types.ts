@@ -1,0 +1,32 @@
+export type FileItem = {
+  id: string;
+  name: string;
+  type: string;
+  size: string;
+  date: Date;
+  url: string;
+  parentId: string | null;
+  isFavorite?: boolean;
+  isTrashed?: boolean;
+  trashedDate?: string;
+  isDeleted?: boolean;
+  isLocked?: boolean;
+  password?: string;
+  tags?: string[];
+  summary?: string;
+  aiDescription?: string;
+  keywords?: string[];
+  contentPreview?: string;
+  downloads?: number;
+  views?: number;
+  shares?: number;
+  lastDownloadedDate?: string;
+  lastViewedDate?: string;
+  lastSharedDate?: string;
+  metadata?: {
+    name: string;
+    size: number;
+    type: string;
+    lastModified: string;
+  };
+};

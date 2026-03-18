@@ -1,0 +1,54 @@
+72:import { FileItem } from './types';
+125:export const getFileIcon = (file: FileItem) => {
+160:const INITIAL_MOCK_FILES: FileItem[] = [
+258:  const [files, setFiles] = useState<FileItem[]>([]);
+265:  const [previewFile, setPreviewFile] = useState<FileItem | null>(null);
+266:  const [contextMenu, setContextMenu] = useState<{ x: number, y: number, file: FileItem } | null>(null);
+267:  const [aiFileChat, setAiFileChat] = useState<{ isOpen: boolean, file: FileItem | null }>({ isOpen: false, file: null });
+301:    file: FileItem | FileItem[] | null;
+552:        const newFile: FileItem = {
+675:  const updateFileMeta = (fileId: string, updates: Partial<FileItem>) => {
+686:    const updates: Partial<FileItem> = {};
+703:  const handleToggleFavorite = (file: FileItem) => {
+708:  const handleTrash = (file: FileItem) => {
+713:  const handleRestore = (file: FileItem) => {
+718:  const handleDelete = async (file: FileItem) => {
+800:        const failedFiles: FileItem[] = [];
+852:  const handleLockFolder = (file: FileItem) => {
+867:  const handleUnlockFolder = (file: FileItem) => {
+882:  const handleRename = async (file: FileItem) => {
+1095:            const newFolder: FileItem = {
+1144:  const handleDownloadFile = (file: FileItem) => {
+1149:  const handleDownloadFolder = async (folder: FileItem) => {
+1167:  const processFolderDownload = async (folder: FileItem) => {
+1225:  const handleCompressFolder = async (folder: FileItem) => {
+1243:  const processFolderCompress = async (folder: FileItem) => {
+1296:    const newFolder: FileItem = {
+1400:      const newFile: FileItem = {
+1506:  const handleExtractFolder = async (fileItem: FileItem) => {
+1872:  const handleShare = (file: FileItem) => {
+1877:  const handleAiSummary = async (file: FileItem) => {
+1914:  const handlePreviewFile = (file: FileItem) => {
+1919:  const handleFolderClick = (folder: FileItem) => {
+3272:function RecentFiles({ files, onFileClick }: { files: FileItem[], onFileClick: (file: FileItem) => void }) {
+3314:function UploadHistory({ files }: { files: FileItem[] }) {
+3359:function ActivityLogDashboard({ files, onFileClick }: { files: FileItem[], onFileClick: (f: FileItem) => void }) {
+3466:function StorageOverview({ files }: { files: FileItem[] }) {
+3552:function DraggableFileItem({ 
+3561:  file: FileItem, 
+3565:  onFileClick: (file: FileItem) => void,
+3566:  onContextMenu: (e: React.MouseEvent, file: FileItem) => void,
+3637:  files: FileItem[], 
+3639:  onFileClick: (file: FileItem) => void,
+3640:  onContextMenu: (e: React.MouseEvent, file: FileItem) => void,
+3678:          <DraggableFileItem
+3790:          </DraggableFileItem>
+4240:  files: FileItem[];
+4258:  const getDescendantIds = (folderIds: string[], allFiles: FileItem[]): string[] => {
+4268:  const getFolderPath = (folderId: string, allFiles: FileItem[]): string => {
+4695:  initialFile: FileItem | null;
+4696:  files: FileItem[];
+4983:  file: FileItem | FileItem[] | null;
+4984:  files: FileItem[];
+5007:      const getDescendants = (folderId: string, allFiles: FileItem[]): FileItem[] => {
+5022:      let descendants: FileItem[] = [];
