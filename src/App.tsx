@@ -68,7 +68,7 @@ import { AiSidebar } from './components/AiSidebar';
 import { AiFileChatModal } from './components/AiFileChatModal';
 import { AIRouter } from './services/ai/router';
 
-const DEFAULT_API_URL = import.meta.env.VITE_GOOGLE_APPS_SCRIPT_URL || 'https://script.google.com/macros/s/AKfycbyUbWc723R4zFtQ0t_w6H-fVsFAG89rhm_84i08ll1I3V-h5tT3P4QUFHrBBi9gAUtpSw/exec';
+const DEFAULT_API_URL = import.meta.env.VITE_GOOGLE_APPS_SCRIPT_URL || 'https://script.google.com/macros/s/AKfycbxzJ-doO7L4YAio0sx3l99vEALEz-omzPnhNBpYKipyc7pJGmWv9kwN8d5XvKvPuC0jIg/exec';
 
 // Types
 import { FileItem } from './types';
