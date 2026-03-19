@@ -1,10 +1,12 @@
 import express from "express";
+import cors from "cors";
 import crypto from "crypto";
 import multer from "multer";
 import fs from "fs";
 import path from "path";
 import { v2 as cloudinary } from 'cloudinary';
 import dotenv from 'dotenv';
+import { GoogleGenAI } from '@google/genai';
 
 dotenv.config();
 
@@ -49,12 +51,147 @@ async function startServer() {
   const app = express();
   const PORT = 3000;
 
+  app.use(cors());
+
+  // Handle Vercel's pre-parsed body
+  app.use((req, res, next) => {
+    if (req.body && typeof req.body === 'object' && !Buffer.isBuffer(req.body)) {
+      // Body is already parsed by Vercel
+      (req as any)._body = true;
+    }
+    next();
+  });
+
   app.use(express.json());
   app.use('/uploads', express.static(uploadDir));
 
   // API routes FIRST
   app.get("/api/health", (req, res) => {
     res.json({ status: "ok" });
+  });
+
+  app.get("/api/config", (req, res) => {
+    res.json({
+      cloudinaryCloudName: process.env.VITE_CLOUDINARY_CLOUD_NAME || process.env.CLOUDINARY_CLOUD_NAME || '',
+      cloudinaryUploadPreset: process.env.VITE_CLOUDINARY_UPLOAD_PRESET || process.env.CLOUDINARY_UPLOAD_PRESET || '',
+    });
+  });
+
+  // AI Gemini endpoints
+  app.post("/api/ai/gemini", async (req, res) => {
+    try {
+      const { prompt, systemInstruction } = req.body;
+      if (!prompt) {
+        return res.status(400).json({ error: "Missing prompt" });
+      }
+
+      const apiKey = process.env.GEMINI_API_KEY || process.env.VITE_GEMINI_API_KEY;
+      if (!apiKey) {
+        return res.status(500).json({ error: "Gemini API key is missing in server environment." });
+      }
+
+      const ai = new GoogleGenAI({ apiKey });
+      
+      const response = await ai.models.generateContent({
+        model: 'gemini-3-flash-preview',
+        contents: prompt,
+        config: systemInstruction ? { systemInstruction } : undefined,
+      });
+      
+      res.json({ text: response.text || '' });
+    } catch (error: any) {
+      console.error("Gemini API Error:", error);
+      res.status(500).json({ error: "Failed to generate content", details: error.message });
+    }
+  });
+
+  app.post("/api/ai/gemini-vision", async (req, res) => {
+    try {
+      const { prompt, imageUrl } = req.body;
+      if (!prompt || !imageUrl) {
+        return res.status(400).json({ error: "Missing prompt or imageUrl" });
+      }
+
+      const apiKey = process.env.GEMINI_API_KEY || process.env.VITE_GEMINI_API_KEY;
+      if (!apiKey) {
+        return res.status(500).json({ error: "Gemini API key is missing in server environment." });
+      }
+
+      const ai = new GoogleGenAI({ apiKey });
+      
+      // Fetch image and convert to base64
+      let absoluteImageUrl = imageUrl;
+      if (imageUrl.startsWith('/')) {
+        // If it's a relative URL, we need to construct the absolute URL
+        const protocol = req.headers['x-forwarded-proto'] || req.protocol || 'http';
+        const host = req.headers.host;
+        absoluteImageUrl = `${protocol}://${host}${imageUrl}`;
+      }
+
+      const imageRes = await fetch(absoluteImageUrl);
+      if (!imageRes.ok) throw new Error(`Failed to fetch image from URL: ${absoluteImageUrl}`);
+      
+      const arrayBuffer = await imageRes.arrayBuffer();
+      const buffer = Buffer.from(arrayBuffer);
+      const base64Data = buffer.toString('base64');
+      
+      const mimeType = imageRes.headers.get('content-type') || 'image/jpeg';
+
+      const response = await ai.models.generateContent({
+        model: 'gemini-3-flash-preview',
+        contents: {
+          parts: [
+            {
+              inlineData: {
+                mimeType: mimeType,
+                data: base64Data
+              }
+            },
+            { text: prompt }
+          ]
+        }
+      });
+      
+      res.json({ text: response.text || '' });
+    } catch (error: any) {
+      console.error("Gemini Vision API Error:", error);
+      res.status(500).json({ error: "Failed to analyze image", details: error.message });
+    }
+  });
+
+  // Proxy endpoint for fetching file content to bypass CORS
+  app.get("/api/proxy-file", async (req, res) => {
+    const fileUrl = req.query.url as string;
+    if (!fileUrl) {
+      return res.status(400).json({ error: "Missing url parameter" });
+    }
+
+    try {
+      // If it's a relative URL, construct the absolute URL
+      let absoluteUrl = fileUrl;
+      if (fileUrl.startsWith('/')) {
+        const protocol = req.headers['x-forwarded-proto'] || req.protocol || 'http';
+        const host = req.headers.host;
+        absoluteUrl = `${protocol}://${host}${fileUrl}`;
+      }
+
+      const response = await fetch(absoluteUrl);
+      if (!response.ok) {
+        return res.status(response.status).json({ error: `Failed to fetch file: ${response.statusText}` });
+      }
+
+      const contentType = response.headers.get('content-type');
+      if (contentType) {
+        res.setHeader('Content-Type', contentType);
+      }
+      
+      const arrayBuffer = await response.arrayBuffer();
+      const buffer = Buffer.from(arrayBuffer);
+      res.send(buffer);
+    } catch (error: any) {
+      console.error("Proxy file error:", error);
+      res.status(500).json({ error: "Failed to proxy file", details: error.message });
+    }
   });
 
   // Proxy endpoint for Google Apps Script to bypass CORS
@@ -66,7 +203,7 @@ async function startServer() {
 
     try {
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 15000);
+      const timeoutId = setTimeout(() => controller.abort(), 60000); // 60 seconds timeout
       
       const response = await fetch(url, {
         method: 'POST',
@@ -82,14 +219,14 @@ async function startServer() {
       const text = await response.text();
       try {
         const json = JSON.parse(text);
-        res.json(json);
+        return res.json(json);
       } catch (e) {
         // If it's not JSON, return as text
-        res.send(text);
+        return res.send(text);
       }
     } catch (error: any) {
       console.error("Proxy error:", error);
-      res.status(500).json({ error: "Proxy request failed", details: error.message });
+      return res.status(500).json({ error: "Proxy request failed", details: error.message });
     }
   });
 

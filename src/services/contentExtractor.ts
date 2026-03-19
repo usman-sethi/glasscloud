@@ -3,7 +3,7 @@ import mammoth from 'mammoth';
 import JSZip from 'jszip';
 
 // Configure pdfjs worker
-pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
+pdfjsLib.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.mjs`;
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 
@@ -24,19 +24,16 @@ export const extractFileContent = async (url: string, fileName: string, sizeStr:
     // Fetch the file
     let response;
     try {
+      // First try fetching directly
       response = await fetch(url);
       if (!response.ok) throw new Error("Not OK");
     } catch (e) {
+      // If direct fetch fails (e.g., CORS), use our backend proxy
       try {
-        response = await fetch(`https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`);
-        if (!response.ok) throw new Error("Proxy Not OK");
+        response = await fetch(`/api/proxy-file?url=${encodeURIComponent(url)}`);
+        if (!response.ok) throw new Error("Backend Proxy Not OK");
       } catch (e2) {
-        try {
-          response = await fetch(`https://corsproxy.io/?${encodeURIComponent(url)}`);
-          if (!response.ok) throw new Error("Failed to fetch file");
-        } catch (e3) {
-          return "[Content not available: Unable to access file due to network or CORS restrictions]";
-        }
+        return "[Content not available: Unable to access file due to network or CORS restrictions]";
       }
     }
 
@@ -74,7 +71,7 @@ export const extractFileContent = async (url: string, fileName: string, sizeStr:
 
 const extractPdfContent = async (blob: Blob): Promise<string> => {
   const arrayBuffer = await blob.arrayBuffer();
-  const loadingTask = pdfjsLib.getDocument({ data: arrayBuffer });
+  const loadingTask = pdfjsLib.getDocument({ data: new Uint8Array(arrayBuffer) });
   const pdf = await loadingTask.promise;
   
   let fullText = '';

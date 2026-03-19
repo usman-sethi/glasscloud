@@ -502,8 +502,21 @@ export default function App() {
       ]);
 
       try {
-        const cloudName = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME;
-        const uploadPreset = import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET;
+        let cloudName = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME;
+        let uploadPreset = import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET;
+
+        if (!cloudName || !uploadPreset) {
+          try {
+            const configRes = await fetch('/api/config');
+            if (configRes.ok) {
+              const configData = await configRes.json();
+              cloudName = configData.cloudinaryCloudName;
+              uploadPreset = configData.cloudinaryUploadPreset;
+            }
+          } catch (e) {
+            console.warn("Could not fetch config from backend", e);
+          }
+        }
 
         if (!cloudName || !uploadPreset) {
           throw new Error("Cloudinary config missing");
@@ -1350,8 +1363,21 @@ export default function App() {
     ]);
 
     try {
-      const cloudName = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME;
-      const uploadPreset = import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET;
+      let cloudName = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME;
+      let uploadPreset = import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET;
+
+      if (!cloudName || !uploadPreset) {
+        try {
+          const configRes = await fetch('/api/config');
+          if (configRes.ok) {
+            const configData = await configRes.json();
+            cloudName = configData.cloudinaryCloudName;
+            uploadPreset = configData.cloudinaryUploadPreset;
+          }
+        } catch (e) {
+          console.warn("Could not fetch config from backend", e);
+        }
+      }
 
       if (!cloudName || !uploadPreset) {
         throw new Error("Cloudinary config missing");
@@ -4602,8 +4628,21 @@ function SharedFileView({ token, callApi, setInputDialog }: { token: string, cal
       ]);
 
       try {
-        const cloudName = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME;
-        const uploadPreset = import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET;
+        let cloudName = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME;
+        let uploadPreset = import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET;
+
+        if (!cloudName || !uploadPreset) {
+          try {
+            const configRes = await fetch('/api/config');
+            if (configRes.ok) {
+              const configData = await configRes.json();
+              cloudName = configData.cloudinaryCloudName;
+              uploadPreset = configData.cloudinaryUploadPreset;
+            }
+          } catch (e) {
+            console.warn("Could not fetch config from backend", e);
+          }
+        }
 
         if (!cloudName || !uploadPreset) {
           throw new Error("Cloudinary config missing");
